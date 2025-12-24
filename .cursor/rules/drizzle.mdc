@@ -1,0 +1,177 @@
+---
+globs: drizzle/schema.ts
+alwaysApply: false
+---
+<DrizzleSchemaDesignRule>
+  <Metadata>
+    <RuleName>Drizzle Schema Design and Normalization Guidelines</RuleName>
+    <TargetSystem>Drizzle ORM for Database Schema Definitions</TargetSystem>
+    <ContextFiles>drizzle/schema.ts</ContextFiles>
+    <Objective>Enforce strict adherence to database best practices for data integrity, soft deletion, and optimal normalization levels.</Objective>
+  </Metadata>
+
+  <CoreDirective>
+    When creating or modifying Drizzle schema definitions in `drizzle/schema.ts`,
+    you must **strictly adhere** to the following database design principles,
+    ensuring data integrity, comprehensive soft deletion, and proper normalization.
+  </CoreDirective>
+
+  <SoftDeleteImplementation>
+    <Principle>
+      Data must **never be physically deleted** from the database. A **soft delete mechanism**
+      is mandatory for all records across all tables.
+    </Principle>
+    <MandatoryColumn>
+      Every single table definition (using `pgTable`, `mysqlTable`, etc.) **must**
+      include a nullable `deleted_at` column.
+      <Configuration>
+        <Type>Timestamp</Type>
+        <Nullable>True</Nullable>
+        <DefaultValue>null</DefaultValue>
+      </Configuration>
+      <Example>
+        `deletedAt: timestamp("deleted_at")`
+      </Example>
+    </MandatoryColumn>
+    <QueryFiltering>
+      All application-level database queries (read operations) that retrieve records
+      for active use **must implicitly filter out any records where `deleted_at` is not null**.
+      This ensures that only active, undeleted data is ever presented to the application and users.
+    </QueryFiltering>
+    <DeleteOperationMechanism>
+      Any operation requested as a "delete" within the application **must translate**
+      into an update operation that sets the `deleted_at` column of the target record
+      to the current timestamp, rather than executing a hard `DELETE` statement on the database.
+    </DeleteOperationMechanism>
+  </SoftDeleteImplementation>
+
+  <NormalizationGuidelines>
+    <CorePrinciple>
+      Strive for the **highest practical level of database normalization** for each entity,
+      balancing optimal data integrity and redundancy reduction with performance considerations.
+      The default stance is to normalize as much as possible given the context.
+    </CorePrinciple>
+    <TargetNormalForms>
+      Always consider and apply the principles of the following normal forms,
+      in order of priority and strictness:
+      <NormalForm name="First Normal Form (1NF)">
+        Eliminate repeating groups within tables and ensure all column values are atomic (indivisible).
+      </NormalForm>
+      <NormalForm name="Second Normal Form (2NF)">
+        Meet 1NF, and ensure all non-key attributes are fully functionally dependent on the entire primary key.
+      </NormalForm>
+      <NormalForm name="Third Normal Form (3NF)">
+        Meet 2NF, and eliminate transitive dependencies (non-key attributes should not depend on other non-key attributes).
+      </NormalForm>
+      <NormalForm name="Boyce-Codd Normal Form (BCNF)">
+        A stricter version of 3NF; every determinant (attribute that determines another attribute) must be a candidate key.
+      </NormalForm>
+      <NormalForm name="Fourth Normal Form (4NF)">
+        Meet BCNF, and remove multi-valued dependencies (attributes that can hold multiple values independently of other attributes).
+      </NormalForm>
+      <NormalForm name="Fifth Normal Form (5NF) / Project-Join Normal Form (PJNF)">
+        Meet 4NF, and eliminate join dependencies, ensuring that a relation cannot be decomposed into smaller relations without loss of information.
+      </NormalForm>
+      <NormalForm name="Sixth Normal Form (6NF)">
+        Further decompose relations into irreducible components to store only irreducible facts, aiming for maximum flexibility and minimal redundancy in specific, complex scenarios.
+      </NormalForm>
+    </TargetNormalForms>
+    <ContextualApplication>
+      The goal is a robust, highly normalized schema. Denormalization should be
+      considered only as a targeted optimization for identified, proven performance
+      bottlenecks, and not as a default design choice.
+    </ContextualApplication>
+    <FutureRefactoringCommentMandate>
+      For complex entities or schema sections where a higher level of normalization
+      (e.g., to 4NF, 5NF, or 6NF) might be beneficial but is not implemented in the
+      current iteration due to immediate development scope, performance balance, or
+      complexity, a concise comment **MUST** be included directly in the
+      `drizzle/schema.ts` file. This comment should:
+      1.  Suggest the potential for deeper normalization.
+      2.  Mention the specific normal form(s) to consider.
+      3.  Briefly outline the benefits of such a future refactor (e.g., "to enhance
+          data integrity for specific attribute types," "to address multi-valued
+          attributes," "to ensure full join dependency").
+      <Example>
+        ```typescript
+        // TODO: Consider further normalization of 'productVariants' to 4NF/5NF
+        // in a future refactor to address multi-valued attributes and ensure
+        // full join dependency for composite keys.
+        export const productVariants = pgTable("product_variants", {
+          // ...
+        });
+        ```
+      </Example>
+    </FutureRefactoringCommentMandate>
+  </NormalizationGuidelines>
+
+  <SchemaFormatting>
+    <ClarityMandate>
+      Ensure Drizzle schema definitions within `drizzle/schema.ts` are highly readable
+      through consistent use of empty lines (a blank line in the code editor) to
+      group related attributes.
+    </ClarityMandate>
+    <AttributeGroupingOrder>
+      Within each `pgTable` (or `mysqlTable`, etc.) column definition block, the
+      following attribute categories **MUST** be grouped and ordered as specified,
+      each separated by **exactly one empty line**:
+      <Group name="Key Attributes">
+        <Description>
+          Primary key(s), composite keys, unique keys, and foreign key definitions.
+          These establish the identity and relationships of the table.
+        </Description>
+        <Example>
+          ```typescript
+          id: serial("id").primaryKey(),
+          organizationId: uuid("organization_id").notNull(),
+          ```
+        </Example>
+      </Group>
+      <Group name="Non-Key Data Attributes">
+        <Description>
+          All other data-carrying columns (e.g., `varchar`, `integer`, `boolean`,
+          `jsonb`, `text`, etc.) that directly describe the entity, excluding
+          timestamps and relationships.
+        </Description>
+        <Example>
+          ```typescript
+          name: varchar("name", { length: 256 }).notNull(),
+          email: varchar("email", { length: 256 }).notNull().unique(),
+          isActive: boolean("is_active").default(true).notNull(),
+          ```
+        </Example>
+      </Group>
+      <Group name="Timestamp Attributes">
+        <Description>
+          Standard timestamp columns: `created_at`, `updated_at`, and the mandatory `deleted_at`.
+        </Description>
+        <Example>
+          ```typescript
+          createdAt: timestamp("created_at").defaultNow().notNull(),
+          updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()).notNull(),
+          deletedAt: timestamp("deleted_at"),
+          ```
+        </Example>
+      </Group>
+    </AttributeGroupingOrder>
+    <RelationsDefinitionPlacement>
+      Drizzle `relations` definitions (e.g., `relations(users, ...)`) **MUST** always
+      be placed immediately after their corresponding `pgTable` (or `mysqlTable`)
+      definition, separated by **exactly one empty line** from the table's column definitions.
+      <Example>
+        ```typescript
+        export const users = pgTable("users", {
+          // ... column definitions ...
+        });
+
+        export const usersRelations = relations(users, ({ one, many }) => ({
+          organization: one(organizations, {
+            fields: [users.organizationId],
+            references: [organizations.id],
+          }),
+        }));
+        ```
+      </Example>
+    </RelationsDefinitionPlacement>
+  </SchemaFormatting>
+</DrizzleSchemaDesignRule>

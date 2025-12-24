@@ -1,0 +1,161 @@
+---
+description: General rules for TypeScript (ts and tsx)
+globs: **/*.ts, **/*.tsx
+alwaysApply: true
+---
+<DevelopmentGuidelines>
+  <Metadata>
+    <ProjectTarget>Next.js 15 App Router</ProjectTarget>
+    <PrimaryTechnologies>TypeScript, Node.js, React, Shadcn UI, Radix UI, Tailwind CSS, Zustand, TanStack React Query, Zod, Jest, React Testing Library, next-i18next, nuqs</PrimaryTechnologies>
+    <ExpertiseAssumption>The LLM is an expert in these technologies.</ExpertiseAssumption>
+  </Metadata>
+
+  <GlobalRules type="ts_and_tsx">
+    <DevelopmentPhilosophy>
+      <Principle>Write clean, maintainable, and scalable code.</Principle>
+      <Principle>Prefer functional and declarative programming patterns; avoid classes and imperative code.</Principle>
+      <Principle>Emphasize type safety and static analysis.</Principle>
+    </DevelopmentPhilosophy>
+    <PlanningPhase>
+      <Guideline>Begin with step-by-step planning for new features or significant changes.</Guideline>
+      <Guideline>Document component architecture and data flow, especially for complex interactions.</Guideline>
+      <Guideline>Consider edge cases and error scenarios upfront to build resilient features.</Guideline>
+    </PlanningPhase>
+    <CodeStyleAndStructure>
+      <Guideline>Write concise, technical TypeScript code.</Guideline>
+      <Guideline>Prefer iteration and modularization over code duplication.</Guideline>
+      <Guideline>Eliminate unused variables and imports.</Guideline>
+      <Guideline>Always use curly braces for 'if' statements, even for single-line bodies, for consistency and to prevent errors.</Guideline>
+      <Guideline>Keep 'else' statements on the same line as the closing curly brace of the preceding 'if' block.</Guideline>
+      <Guideline>Always handle error parameters in callbacks (where applicable).</Guideline>
+      <Guideline>All functions and components must be declared using the 'function' keyword; arrow functions and anonymous functions are prohibited.</Guideline>
+    </CodeStyleAndStructure>
+    <NamingConventions>
+      <GeneralRules>
+        <Rule case="PascalCase">
+          <AppliesTo>Components, Type definitions, Interfaces</AppliesTo>
+        </Rule>
+        <Rule case="kebab-case">
+          <AppliesTo>Directory names (e.g., 'components/auth-wizard'), File names (e.g., 'user-profile.tsx')</AppliesTo>
+        </Rule>
+        <Rule case="camelCase">
+          <AppliesTo>Variables, Functions, Methods, Hooks, Properties, Props</AppliesTo>
+        </Rule>
+        <Rule case="UPPERCASE_SNAKE_CASE">
+          <AppliesTo>Environment variables, Constants, Global configurations</AppliesTo>
+        </Rule>
+      </GeneralRules>
+      <SpecificNamingPatterns>
+        <Pattern prefix="handle">
+          <AppliesTo>Event handlers (e.g., 'handleClick', 'handleSubmit')</AppliesTo>
+        </Pattern>
+        <Pattern prefixAsVerb="true">
+          <AppliesTo>Boolean variables (e.g., 'isLoading', 'hasError', 'canSubmit')</AppliesTo>
+        </Pattern>
+        <Pattern prefix="use">
+          <AppliesTo>Custom hooks (e.g., 'useAuth', 'useForm')</AppliesTo>
+        </Pattern>
+        <Pattern avoidAbbreviations="true">
+          <Description>Use complete words over abbreviations, except for:</Description>
+          <Exceptions>err (error), req (request), res (response), props (properties), ref (reference)</Exceptions>
+        </Pattern>
+        <Pattern defaultExport="false">
+          <AppliesTo>Components</AppliesTo>
+          <Description>Favor named exports for components.</Description>
+        </Pattern>
+      </SpecificNamingPatterns>
+    </NamingConventions>
+    <UIAndStyling>
+      <ComponentLibraries>
+        <Guideline>Use Shadcn UI for consistent, accessible component design.</Guideline>
+        <Guideline>Integrate Radix UI primitives for customizable, accessible UI elements.</Guideline>
+        <Guideline>Apply composition patterns to create modular, reusable components.</Guideline>
+      </ComponentLibraries>
+      <StylingGuidelines>
+        <Guideline>Use Tailwind CSS for utility-first, maintainable styling.</Guideline>
+        <Guideline>Design with mobile-first, responsive principles for flexibility across devices.</Guideline>
+        <Guideline>Implement dark mode using CSS variables or Tailwind’s dark mode features.</Guideline>
+        <Guideline>Ensure color contrast ratios meet accessibility standards for readability.</Guideline>
+        <Guideline>Maintain consistent spacing values to establish visual harmony.</Guideline>
+        <Guideline>Define CSS variables for theme colors and spacing to support easy theming and maintainability.</Guideline>
+      </StylingGuidelines>
+    </UIAndStyling>
+    <PerformanceOptimization>
+      <CorePrinciple>Prioritize Server Components > Zustand Store > Local Component State (e.g., useState).</CorePrinciple>
+      <Guideline>Minimize 'use client' directives; default to React Server Components (RSC).</Guideline>
+      <Guideline>Wrap client components in Suspense with fallback for better user experience during loading.</Guideline>
+      <Guideline>Implement dynamic loading for non-critical components to reduce initial bundle size (code splitting).</Guideline>
+      <Guideline>Optimize images using Next.js Image component (WebP format, size data, lazy loading).</Guideline>
+      <Guideline>Use `React.memo()` strategically for memoizing components to prevent unnecessary re-renders.</Guideline>
+      <Guideline>Implement proper cleanup functions in `useEffect` hooks to prevent memory leaks.</Guideline>
+      <Guideline>Use `useCallback` for memoizing callback functions passed to child components.</Guideline>
+      <Guideline>Implement `useMemo` for expensive computations to avoid recalculations on every render.</Guideline>
+      <Guideline>Avoid inline function definitions in JSX where possible, as they lead to new function instances on every render.</Guideline>
+      <Guideline>Implement proper `key` props in lists; avoid using array indices as keys, especially when list items can change order.</Guideline>
+      <Guideline>Utilize Next.js App Router for all routing needs.</Guideline>
+      <Guideline>Implement proper metadata management using Next.js built-in features.</Guideline>
+      <Guideline>Use appropriate caching strategies as per Next.js documentation.</Guideline>
+      <Guideline>Implement proper error boundaries to gracefully handle runtime errors in React component trees.</Guideline>
+      <Guideline>Use Next.js built-in components: `Image`, `Link`, `Script`, `Head` for optimized functionality.</Guideline>
+      <Guideline>Implement proper loading states for data fetching or asynchronous operations.</Guideline>
+      <Guideline>Use URL query parameters for data fetching and server state management, integrating `nuqs` for client-side URL search parameter state.</Guideline>
+      <Guideline>Optimize Web Vitals (LCP, CLS, FID).</Guideline>
+    </PerformanceOptimization>
+    <ErrorHandlingAndValidation>
+      <FormValidation>
+        <Guideline>Use Zod for all schema validation.</Guideline>
+        <Guideline>Implement clear and user-friendly error messages.</Guideline>
+        <Guideline>Use appropriate form libraries (e.g., React Hook Form) for complex form logic.</Guideline>
+      </FormValidation>
+      <ErrorBoundaries>
+        <Guideline>Use error boundaries to catch and handle errors in React component trees gracefully.</Guideline>
+        <Guideline>Design user-friendly fallback UIs to display when errors occur, informing users without breaking the application experience.</Guideline>
+      </ErrorBoundaries>
+    </ErrorHandlingAndValidation>
+    <Testing>
+      <UnitTesting>
+        <Guideline>Write thorough unit tests to validate individual functions and components.</Guideline>
+        <Guideline>Use Jest and React Testing Library for reliable and efficient testing of React components.</Guideline>
+        <Guideline>Follow patterns like Arrange-Act-Assert to ensure clarity and consistency in tests.</Guideline>
+        <Guideline>Mock external dependencies and API calls to isolate unit tests effectively.</Guideline>
+      </UnitTesting>
+      <IntegrationTesting>
+        <Guideline>Focus on user workflows to ensure end-to-end application functionality.</Guideline>
+        <Guideline>Set up and tear down test environments properly to maintain test independence and prevent side effects.</Guideline>
+        <Guideline>Use snapshot testing selectively to catch unintended UI changes, but avoid over-reliance.</Guideline>
+        <Guideline>Leverage testing utilities (e.g., 'screen' in React Testing Library) for cleaner and more readable tests.</Guideline>
+      </IntegrationTesting>
+    </Testing>
+    <Accessibility a11y="true">
+      <CoreRequirements>
+        <Guideline>Use semantic HTML for meaningful page structure.</Guideline>
+        <Guideline>Apply accurate ARIA attributes where needed to enhance semantic meaning for assistive technologies.</Guideline>
+        <Guideline>Ensure full keyboard navigation support for all interactive elements.</Guideline>
+        <Guideline>Manage focus order and visibility effectively to provide a logical user flow.</Guideline>
+        <Guideline>Maintain accessible color contrast ratios to meet WCAG standards for readability.</Guideline>
+        <Guideline>Follow a logical heading hierarchy (H1, H2, etc.) for clear content structure.</Guideline>
+        <Guideline>Make all interactive elements accessible, providing alternative text and roles as needed.</Guideline>
+        <Guideline>Provide clear and accessible error feedback for form validation and other user interactions.</Guideline>
+      </CoreRequirements>
+    </Accessibility>
+    <Security>
+      <Guideline>Always implement input sanitization to prevent Cross-Site Scripting (XSS) attacks.</Guideline>
+      <Guideline>Use DOMPurify for sanitizing HTML content; avoid using `dangerouslySetInnerHTML` directly without sanitization.</Guideline>
+      <Guideline>Implement proper authentication and authorization methods throughout the application.</Guideline>
+    </Security>
+    <Internationalization i18n="true">
+      <Guideline>Use 'next-i18next' for all translation management.</Guideline>
+      <Guideline>Implement proper locale detection for automatic language preference.</Guideline>
+      <Guideline>Use proper number and date formatting based on the detected locale.</Guideline>
+      <Guideline>Implement proper RTL (Right-to-Left) support for languages that require it.</Guideline>
+      <Guideline>Use proper currency formatting for financial displays.</Guideline>
+    </Internationalization>
+    <Documentation>
+      <Guideline>Use JSDoc for documenting all public functions, methods, and interfaces.</Guideline>
+      <Guideline>Add clear and concise examples to documentation when appropriate.</Guideline>
+      <Guideline>Use complete sentences with proper punctuation in descriptions.</Guideline>
+      <Guideline>Utilize proper markdown formatting, code blocks, links, headings, and lists in documentation.</Guideline>
+    </Documentation>
+
+  </GlobalRules>
+</DevelopmentGuidelines>

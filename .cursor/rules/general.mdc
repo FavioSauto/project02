@@ -1,0 +1,87 @@
+---
+alwaysApply: true
+---
+<LLM_OperationalGuidanceRule>
+  <Metadata>
+    <RuleName>LLM Proactive & Rule-Driven Problem Solving</RuleName>
+    <Objective>Enhance LLM efficiency, intelligence, and practicality by guiding its approach to fulfilling user requests within the established project context.</Objective>
+  </Metadata>
+
+  <CoreDirective>
+    When responding to any request, you **must consistently and intelligently integrate**
+    all previously defined project rules (structure, coding standards, Drizzle, Zod,
+    server logic, etc.) into your problem-solving approach. Your output should not
+    just *follow* rules but demonstrate a proactive understanding and application of them.
+  </CoreDirective>
+
+  <Guidelines>
+    <Guideline>
+      <Title>Contextual Rule Integration & Cross-Referencing</Title>
+      <Description>
+        For every user request, internally identify all relevant established project rules.
+        When providing solutions, explicitly mention and briefly reference the most critical
+        rules that guided your approach (e.g., "Following `ProjectStructureRules` for placement...",
+        "Adhering to `PerformanceOptimization` for RSC priority..."). This demonstrates
+        intelligent application and transparency, allowing the user to understand the reasoning.
+      </Description>
+    </Guideline>
+
+    <Guideline>
+      <Title>Proactive Architectural Alignment</Title>
+      <Description>
+        Beyond direct task execution, anticipate architectural implications. When a user
+        asks for a new feature, component, or complex piece of logic, proactively suggest
+        its optimal placement and implementation strategy based on the overarching
+        project structure (`features/`, `components/`, `server/`, `schemas/`, `store/`, etc.).
+        This guides the user towards maintaining structural integrity from the outset.
+      </Description>
+    </Guideline>
+
+    <Guideline>
+      <Title>Justification of Design Choices & Trade-offs</Title>
+      <Description>
+        When making design decisions, especially those involving trade-offs (e.g.,
+        choosing a client component over a server component, opting for a specific
+        normalization level over full normalization for performance reasons),
+        briefly explain the rationale. Reference the relevant rules (e.g.,
+        `PerformanceOptimization`, `NormalizationGuidelines`) and highlight the
+        benefits and potential compromises of the chosen path. Maintain conciseness
+        unless more detail is explicitly requested.
+      </Description>
+    </Guideline>
+
+    <Guideline>
+      <Title>Constraint-Driven Generation & Deviation Alerting</Title>
+      <Description>
+        Treat all defined rules as strict, immutable constraints. Before presenting a solution,
+        perform an internal "self-review" to verify strict compliance. If a user request
+        inherently conflicts with an established rule, or if a deviation is unavoidable
+        due to specific, user-imposed constraints (e.g., "do X even if it violates Y"),
+        you **must** explicitly flag the potential violation. Clearly explain *why* it's a
+        deviation, and propose compliant alternatives or mitigation strategies. **Never**
+        proceed with a rule violation without explicit user acknowledgment and justification.
+      </Description>
+    </Guideline>
+
+    <Guideline>
+      <Title>Clarification for Ambiguity or Potential Violations</Title>
+      <Description>
+        If a user request is ambiguous, incomplete, or appears to lead directly
+        to a violation of established rules, proactively ask clarifying questions
+        or suggest reframing the request to ensure alignment with the project's standards
+        before proceeding with code generation. This prevents misinterpretations and
+        ensures the generated output is useful and compliant.
+      </Description>
+    </Guideline>
+
+    <Guideline>
+      <Title>Concise & Actionable Output</Title>
+      <Description>
+        Consistent with the user's preference for conciseness, ensure all responses are
+        direct, and actionable. Provide "TLDR;" summaries for comprehensive answers
+        and prioritize code examples and concrete guidance over lengthy prose. Avoid
+        unnecessary preamble or conversational filler; get straight to the point.
+      </Description>
+    </Guideline>
+  </Guidelines>
+</LLM_OperationalGuidanceRule>

@@ -1,0 +1,220 @@
+---
+globs: features/**/schemas/*.ts
+alwaysApply: false
+---
+<ZodSchemaRules>
+  <Metadata>
+    <RuleName>Zod Schema Definition and Best Practices</RuleName>
+    <TargetSystem>All files containing one or more Zod schemas</TargetSystem>
+    <ContextFiles>
+      <FilePattern>features/[featureName]/schemas/*.ts</FilePattern>
+      <Description>Typically found within feature-specific 'schemas/' directories.</Description>
+    </ContextFiles>
+    <Objective>Ensure Zod schemas are defined securely, efficiently, and consistently, serving as the single source of truth for input validation and type inference.</Objective>
+  </Metadata>
+
+  <CoreDirective>
+    Whenever defining or modifying Zod schemas, you **must strictly adhere**
+    to the following best practices for validation, type safety, security,
+    and maintainability. Zod schemas are crucial for defining the expected
+    shape and content of data throughout the application.
+  </CoreDirective>
+
+  <LocationAndNaming>
+    <Location>
+      Zod schema definitions **must reside exclusively in `.ts` files**,
+      typically within `features/[featureName]/schemas/` directories.
+      They **must never** be defined directly within `.tsx` files.
+    </Location>
+    <NamingConventions>
+      <SchemaNamePattern>
+        Schema variables should follow `camelCase` and clearly indicate their purpose
+        (e.g., `userProfileSchema`, `createProductSchema`, `loginInputSchema`).
+      </SchemaNamePattern>
+      <FileNamePattern>
+        File names should be `kebab-case` and reflect the entities or actions they validate
+        (e.g., `user-schemas.ts`, `auth-schemas.ts`).
+      </FileNamePattern>
+    </NamingConventions>
+  </LocationAndNaming>
+
+  <BestPractices>
+    <Guideline>
+      <Title>Type Inference</Title>
+      <Description>
+        Always infer TypeScript types directly from Zod schemas using `z.infer<typeof yourSchema>`.
+        This ensures that your TypeScript types are always synchronized with your validation rules,
+        eliminating potential discrepancies and enhancing type safety.
+      </Description>
+      <CodeExample language="ts">
+        <![CDATA[
+        import { z } from "zod";
+
+        export const createUserSchema = z.object({
+          name: z.string().min(1, "Name is required."),
+          email: z.string().email("Invalid email address."),
+        });
+
+        export type CreateUserInput = z.infer<typeof createUserSchema>;
+        ]]>
+      </CodeExample>
+    </Guideline>
+
+    <Guideline>
+      <Title>Conciseness and Readability</Title>
+      <Description>
+        Define schemas as concisely as possible without sacrificing clarity.
+        Group related fields logically.
+      </Description>
+    </Guideline>
+
+    <Guideline>
+      <Title>Custom Error Messages</Title>
+      <Description>
+        Provide clear, user-friendly, and specific custom error messages for all validation
+        rules (`.min()`, `.max()`, `.email()`, etc.). Avoid generic error messages
+        to improve the user experience and simplify debugging.
+      </Description>
+      <CodeExample language="ts">
+        <![CDATA[
+        export const passwordSchema = z.string()
+          .min(8, "Password must be at least 8 characters long.")
+          .max(100, "Password cannot exceed 100 characters.");
+        ]]>
+      </CodeExample>
+    </Guideline>
+
+    <Guideline>
+      <Title>Refinement for Cross-Field and Complex Validation</Title>
+      <Description>
+        Use the `.refine()` method for validation logic that depends on multiple fields
+        or involves complex conditional checks that cannot be expressed with standard Zod methods.
+        Provide a clear error message and a path to identify the failing field if applicable.
+      </Description>
+      <CodeExample language="ts">
+        <![CDATA[
+        export const loginSchema = z.object({
+          password: z.string(),
+          confirmPassword: z.string(),
+        }).refine((data) => data.password === data.confirmPassword, {
+          message: "Passwords do not match.",
+          path: ["confirmPassword"], // Point to the specific field in validation errors
+        });
+        ]]>
+      </CodeExample>
+    </Guideline>
+
+    <Guideline>
+      <Title>Transformation for Data Manipulation</Title>
+      <Description>
+        Utilize the `.transform()` method for safely converting input data types
+        (e.g., string to number, string to Date object, trimming whitespace).
+        This ensures data is in the correct format before being used in business logic or stored in the database.
+      </Description>
+      <CodeExample language="ts">
+        <![CDATA[
+        export const itemPriceSchema = z.string()
+          .refine(val => !isNaN(parseFloat(val)), { message: "Price must be a number." })
+          .transform(val => parseFloat(val));
+
+        export const dateSchema = z.string()
+          .transform((str) => new Date(str)); // Be careful with date parsing
+        ]]>
+      </CodeExample>
+    </Guideline>
+
+    <Guideline>
+      <Title>Default Values and Optionality</Title>
+      <Description>
+        Clearly define optional fields using `.optional()` or `z.union([Type, z.null()])`.
+        Use `.default()` to provide fallback values for optional fields when they are not provided,
+        ensuring consistency and reducing `undefined` checks in application logic.
+      </Description>
+      <CodeExample language="ts">
+        <![CDATA[
+        export const productSchema = z.object({
+          name: z.string(),
+          description: z.string().optional().default("No description provided."),
+          quantity: z.number().int().min(0).default(0),
+        });
+        ]]>
+      </CodeExample>
+    </Guideline>
+
+    <Guideline>
+      <Title>Schema Reusability and Extension</Title>
+      <Description>
+        Promote reusability by defining base schemas and extending them using `.extend()`,
+        `.merge()`, or `.partial()`/`.omit()`/`.pick()` for different contexts
+        (e.g., `create` vs. `update` operations).
+      </Description>
+      <CodeExample language="ts">
+        <![CDATA[
+        export const baseUserSchema = z.object({
+          name: z.string(),
+          email: z.string().email(),
+        });
+
+        export const createUserSchema = baseUserSchema.extend({
+          password: z.string().min(8),
+        });
+
+        export const updateUserSchema = baseUserSchema.partial(); // All fields become optional
+        ]]>
+      </CodeExample>
+    </Guideline>
+
+    <Guideline>
+      <Title>Security: Handling Unknown Fields</Title>
+      <Description>
+        For schemas validating client-provided inputs (e.g., form data, API requests),
+        always explicitly specify the behavior for unknown fields. Prefer `strict()`
+        to disallow unknown fields or `strip()` to remove them, enhancing security
+        by preventing unexpected data injection. `passthrough()` should be used with extreme
+        caution and only when explicitly required to preserve unknown data.
+      </Description>
+      <CodeExample language="ts">
+        <![CDATA[
+        // Recommended for client inputs: disallow or strip unknown fields
+        export const secureInputSchema = z.object({
+          field1: z.string(),
+        }).strip(); // Unknown fields are removed
+        // Or: .strict(); // Unknown fields will cause validation error
+        ]]>
+      </CodeExample>
+    </Guideline>
+
+    <Guideline>
+      <Title>Error Object Flattening</Title>
+      <Description>
+        When validating, utilize `schema.safeParse(data)` and `parsed.error.flatten().fieldErrors`
+        to get a structured, easy-to-use object of validation errors, especially for forms.
+      </Description>
+    </Guideline>
+
+  </BestPractices>
+
+  <Integration>
+    <Directive>
+      Zod schemas serve as the foundational contract for data throughout the application.
+      They **must be consistently used for**:
+    </Directive>
+    <UseCase>
+      **Server Action Input Validation:** As mandated in `ServerLogicRules`, all Server
+      Action inputs are validated with Zod schemas.
+    </UseCase>
+    <UseCase>
+      **API Request Body/Query Validation:** For any API routes (if implemented outside
+      Server Actions), Zod schemas define the expected input.
+    </UseCase>
+    <UseCase>
+      **Form Validation in Client Components:** Integrated with form libraries (e.g., React Hook Form),
+      Zod schemas provide the validation rules for client-side forms.
+    </UseCase>
+    <UseCase>
+      **Data Type Definition:** Inferring types (`z.infer`) from schemas provides consistent
+      TypeScript types for application data models.
+    </UseCase>
+  </Integration>
+
+</ZodSchemaRules>

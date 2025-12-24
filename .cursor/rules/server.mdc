@@ -1,0 +1,341 @@
+---
+globs: features/**/server/**/*.ts
+alwaysApply: false
+---
+<ServerLogicRules>
+<Metadata>
+  <RuleName>Server Actions and Database Interaction Guidelines for Features</RuleName>
+  <TargetSystem>Next.js 15 App Router Server Logic with Drizzle ORM</TargetSystem>
+  <ContextFiles>
+    <FilePattern>features/[featureName]/server/actions/index.ts</FilePattern>
+    <FilePattern>features/[featureName]/server/db/index.ts</FilePattern>
+  </ContextFiles>
+  <Objective>Establish strict guidelines for server-side logic, input handling, and database interactions within feature modules to ensure security, data integrity, and performance.</Objective>
+</Metadata>
+
+<CoreDirective>
+  All files within the `features/[featureName]/server/` directory, specifically
+  `actions/index.ts` and `db/index.ts`, are designated exclusively for
+  server-side execution. They **must explicitly declare their server environment**
+  and adhere to the following best practices for input handling, data fetching,
+  and database operations.
+</CoreDirective>
+
+<CommonRequirements>
+  <Directive>
+    At the very top of each `.ts` file within `features/[featureName]/server/`
+    (e.g., `actions/index.ts` and `db/index.ts`), the following
+    directive **must be present** to explicitly mark it for server-only execution:
+  </Directive>
+  <CodeBlock language="ts">
+    "use server";
+  </CodeBlock>
+  <Rationale>
+    This directive ensures that no server-only code accidentally leaks to the client bundle,
+    optimizes build processes, and enables the full functionality of Next.js Server Components.
+  </Rationale>
+</CommonRequirements>
+
+<ActionsFileRules filePattern="features/[featureName]/server/actions/index.ts">
+  <Purpose>
+    Server Actions serve as the secure entry points for client-side interactions with
+    server-side logic. Their primary responsibility is to ensure that all incoming
+    inputs are robustly validated and sanitized, preventing malicious or invalid data
+    from affecting application logic or reaching the database.
+  </Purpose>
+  <InputValidation>
+    <Mandate>
+      All inputs received by a Server Action **must undergo strict validation**
+      before any processing, business logic execution, or database interaction.
+    </Mandate>
+    <Tooling>
+      Prefer using a schema validation library such as Zod for defining clear,
+      type-safe schemas and validating incoming data payloads.
+    </Tooling>
+    <FailureHandling>
+      If input validation fails, the Server Action **must immediately return an
+      informative error response** to the client, preventing any further execution
+      of the action's logic or database operations.
+    </FailureHandling>
+    <Example>
+      ```typescript
+      // Example validation using Zod
+      import { z } from "zod";
+
+      const createItemSchema = z.object({
+        name: z.string().min(1, "Name is required.").max(255),
+        description: z.string().optional(),
+        // ... other fields
+      });
+
+      export async function createItemAction(formData: FormData) {
+        const rawInput = Object.fromEntries(formData);
+        const parsedInput = createItemSchema.safeParse(rawInput);
+
+        if (!parsedInput.success) {
+          // Return specific validation errors
+          return { error: parsedInput.error.flatten().fieldErrors };
+        }
+
+        const { name, description } = parsedInput.data;
+        // ... Proceed with validated and typed data
+      }
+      ```
+    </Example>
+  </InputValidation>
+  <InputSanitization>
+    <Mandate>
+      Beyond validation, all user-provided string inputs that might contain arbitrary
+      content (e.g., rich text, comments) **must be properly sanitized**
+      to prevent common vulnerabilities such as Cross-Site Scripting (XSS).
+    </Mandate>
+    <Guideline>
+      For any input that could contain HTML (e.g., from a rich text editor), use a
+      dedicated sanitization library like `DOMPurify` before storing it in the database
+      or rendering it in the UI.
+    </Guideline>
+    <Avoidance>
+      **Never** use `dangerouslySetInnerHTML` with unsanitized or untrusted content.
+    </Avoidance>
+    <Rationale>
+      While Drizzle protects against SQL injection in parameterized queries,
+      general input sanitization is crucial for broader application security.
+    </Rationale>
+  </InputSanitization>
+  <InteractionWithDB>
+    <Mandate>
+      Server Actions **must interact exclusively** with the database through
+      the dedicated query functions exported from the `db/index.ts` file
+      of the same feature. They **must not** directly construct Drizzle queries
+      or access the Drizzle client (`db`) directly.
+    </Mandate>
+    <Rationale>
+      This enforces a clear separation of concerns, centralizes database logic,
+      and ensures that database interactions adhere to consistent filtering and best practices.
+    </Rationale>
+  </InteractionWithDB>
+  <ErrorHandlingDirective>
+    <Title>Server Actions: Error Management and Client Communication</Title>
+    <Description>
+      All Server Actions must wrap their core logic (including calls to the DB layer)
+      in `try-catch` blocks. Upon catching an `error`, log the detailed error internally
+      for debugging. Return a structured, client-safe error object. The returned error
+      should map internal exceptions (especialmente custom ones thrown by the DB layer)
+      to common HTTP status codes (e.g., 400 Bad Request, 401 Unauthorized, 403 Forbidden,
+      404 Not Found, 409 Conflict, 500 Internal Server Error) to clearly communicate
+      the issue without exposing sensitive server-side details.
+    </Description>
+    <ReturnFormat>
+      Return an object with an `error` property containing at least a `message` and
+      a `statusCode` (matching HTTP semantics) or `errorCode`.
+    </ReturnFormat>
+    <CodeExample language="ts">
+      <![CDATA[
+      // Assume CustomNotFoundError, CustomValidationError, CustomUnauthorizedError,
+      // CustomConflictError, etc., are custom error classes defined centrally
+      // (e.g., in `lib/errors.ts`) and thrown by the DB layer or internal business logic.
+
+      export async function someFeatureAction(data: SomeInputType) {
+        // "use server"; // Omitted for brevity, assumed from parent context
+        try {
+          // ... input validation (e.g., Zod) - handled before try-catch for immediate feedback
+          // ... call feature-specific db functions (e.g., createEntityInDb)
+          return { success: true, data: result }; // Successful response
+        } catch (error: unknown) {
+          console.error(`Error in someFeatureAction:`, error); // Log for internal debugging
+
+          // Map specific custom errors to appropriate HTTP-like status codes for client feedback
+          if (error instanceof CustomNotFoundError) {
+            return { error: { message: error.message, statusCode: 404 } };
+          }
+          if (error instanceof CustomValidationError) {
+            return { error: { message: error.message, statusCode: 400, details: (error as any).details } };
+          }
+          if (error instanceof CustomUnauthorizedError) {
+            return { error: { message: error.message, statusCode: 401 } };
+          }
+          if (error instanceof CustomConflictError) {
+            return { error: { message: error.message, statusCode: 409 } };
+          }
+
+          // Default for any unexpected server errors
+          return { error: { message: "An unexpected server error occurred.", statusCode: 500 } };
+        }
+      }
+      ]]>
+    </CodeExample>
+  </ErrorHandlingDirective>
+</ActionsFileRules>
+
+<DBFileRules filePattern="features/[featureName]/server/db/index.ts">
+  <Purpose>
+    The `db/index.ts` file within each feature is the single, centralized source of truth
+    for all database operations (queries and mutations) specific to that feature.
+    It provides a clean, type-safe, and consistent API for Server Actions to
+    interact with the database, adhering to strict data integrity and performance standards.
+  </Purpose>
+  <SoftDeleteFiltering>
+    <Mandate>
+      All read operations (SELECT queries) that retrieve active records for application
+      use **must explicitly include a `WHERE` clause to filter out soft-deleted records**.
+    </Mandate>
+    <Condition>
+      For every such query, a condition equivalent to `WHERE table.deleted_at IS NULL`
+      **must be applied**.
+    </Condition>
+    <Exception>
+      Queries specifically designed for administrative tasks that require retrieving
+      soft-deleted records are exempt, but such exceptions **must be clearly documented**
+      within the query function's JSDoc, explaining the intent.
+    </Exception>
+    <Example>
+      ```typescript
+      import { db } from "@/drizzle/db"; // Global Drizzle client
+      import { users } from "@/drizzle/schema"; // Feature-specific schema import
+      import { eq, isNull, and } from "drizzle-orm"; // Drizzle operators
+
+      // Get all active users for this feature
+      export async function getAllActiveFeatureUsers() {
+        return await db.query.users.findMany({
+          where: (users, { isNull }) => isNull(users.deletedAt),
+          // ... other conditions like orderBy, limit, offset
+        });
+      }
+
+      // Get a single active user by ID for this feature
+      export async function getActiveUserById(userId: string) {
+        return await db.query.users.findFirst({
+          where: (users, { eq, isNull }) =>
+            and(eq(users.id, userId), isNull(users.deletedAt)),
+        });
+      }
+      ```
+    </Example>
+  </SoftDeleteFiltering>
+  <DrizzleSQLORMBestPractices>
+    <Principle>
+      Adhere to the highest standards of Drizzle ORM usage, SQL best practices,
+      and general ORM principles to ensure optimal performance, security,
+      maintainability, and data integrity.
+    </Principle>
+    <Guidelines>
+      <Guideline>
+        **Select Only Necessary Columns:** Always use Drizzle's `columns` method
+        (e.g., `db.select({ id: users.id, name: users.name }).from(users)`)
+        or `findMany({ columns: { ... } })` to fetch only the data explicitly
+        required by the calling Server Action. This minimizes data transfer,
+        memory usage, and improves query efficiency.
+      </Guideline>
+      <Guideline>
+        **Efficient Joins and Relations (N+1 Avoidance):** Utilize Drizzle's
+        `with` method (e.g., `db.query.users.findMany({ with: { posts: true } })`)
+        for eager loading related data when multiple relationships are needed,
+        preventing the N+1 query problem. Ensure `relations` are properly
+        defined in `drizzle/schema.ts` to support this.
+      </Guideline>
+      <Guideline>
+        **Transactions for Atomic Operations:** Use Drizzle's `transaction`
+        functionality (`await db.transaction(async (tx) => { ... })`) for any
+        sequence of database operations that **must succeed or fail as a single
+        atomic unit** to ensure data consistency and prevent partial updates.
+      </Guideline>
+      <Guideline>
+        **Robust Error Handling:** Wrap all database operations in `try-catch`
+        blocks to gracefully handle potential database errors (e.g., network issues,
+        constraint violations). Log errors appropriately and throw specific,
+        meaningful errors that can be caught and handled by the calling Server Action.
+      </Guideline>
+      <Guideline>
+        **Parameterized Queries (Drizzle Default):** Drizzle ORM inherently
+        uses prepared statements, which effectively prevents SQL injection.
+        Ensure you are consistently passing values as parameters to Drizzle
+        methods (`eq`, `and`, `set`, `where` conditions, etc.) rather than
+        constructing raw SQL strings.
+      </Guideline>
+      <Guideline>
+        **Pagination:** Implement pagination (using `limit` and `offset`, or
+        cursor-based pagination) for any query that might return a large
+        number of records to manage resource usage, improve response times,
+        and enhance user experience.
+      </Guideline>
+      <Guideline>
+        **Clear and Readable Queries:** Structure Drizzle queries for maximum
+        clarity and readability. Use logical grouping, aliases when necessary,
+        and break down complex queries into manageable, understandable parts.
+      </Guideline>
+      <Guideline>
+        **Reusability:** Encapsulate common query patterns or frequently
+        accessed data operations into reusable functions within this file
+        to avoid duplication, promote consistency, and centralize logic changes.
+      </Guideline>
+      <Guideline>
+        **Index Awareness (Implicit):** While indices are defined in `drizzle/schema.ts`,
+        query design should implicitly consider their existence. Queries with
+        `WHERE` clauses, `ORDER BY` clauses, and `JOIN` conditions should be
+        designed to leverage existing indices effectively for performance.
+      </Guideline>
+    </Guidelines>
+  </DrizzleSQLORMBestPractices>
+  <ErrorHandlingDirective>
+    <Title>Database Layer: Error Propagation and Custom Exceptions</Title>
+    <Description>
+      Database operations in `db/index.ts` must catch Drizzle-specific or raw database driver errors.
+      Instead of returning raw database errors, **re-throw custom, domain-specific error classes or objects**
+      (e.g., `CustomNotFoundError`, `CustomUniqueConstraintError`, `CustomDatabaseConnectionError`).
+      These custom errors should be logged internally with full details but only propagate a
+      clear, semantic error type (or a specific custom error instance) to the calling Server Action.
+      The `db` layer should **not** concern itself with HTTP status codes; that mapping is the
+      responsibility of the `actions` layer. Return `null` or `undefined` only for expected
+      "no result" scenarios when a resource might legitimately not exist and its absence is not an error state.
+    </Description>
+    <CodeExample language="ts">
+      <![CDATA[
+      // Define custom error classes centrally, e.g., in `lib/errors.ts`
+      export class CustomNotFoundError extends Error {
+        constructor(message = "Resource not found") {
+          super(message);
+          this.name = "CustomNotFoundError";
+        }
+      }
+      export class CustomConflictError extends Error {
+        constructor(message = "Resource conflict") {
+          super(message);
+          this.name = "CustomConflictError";
+        }
+      }
+      // Add other custom error classes as needed (e.g., CustomValidationError for DB-level checks, CustomUnauthorizedError)
+
+      export async function getEntityById(id: string) {
+        // "use server"; // Omitted for brevity, assumed from parent context
+        try {
+          const entity = await db.query.entities.findFirst({
+            where: (entities, { eq }) => eq(entities.id, id),
+          });
+          if (!entity) {
+            // Throw a custom error if a required resource is not found
+            throw new CustomNotFoundError(`Entity with ID ${id} does not exist.`);
+          }
+          return entity;
+        } catch (error: unknown) {
+          console.error(`DB error in getEntityById:`, error); // Log raw error for internal debugging
+
+          // Re-throw custom errors directly
+          if (error instanceof CustomNotFoundError || error instanceof CustomConflictError) {
+            throw error;
+          }
+
+          // Map specific raw DB errors to custom, semantic errors
+          if ((error as any).message?.includes("duplicate key value violates unique constraint")) {
+            throw new CustomConflictError("A resource with this unique identifier already exists.");
+          }
+
+          // For any other unexpected database issues, throw a generic error or a more specific custom error
+          throw new Error("Failed to retrieve entity due to an unexpected database error.");
+        }
+      }
+      ]]>
+    </CodeExample>
+  </ErrorHandlingDirective>
+</DBFileRules>
+
+</ServerLogicRules>

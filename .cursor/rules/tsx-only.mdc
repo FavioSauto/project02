@@ -1,0 +1,41 @@
+---
+globs: **/*.tsx
+alwaysApply: false
+---
+<DevelopmentGuidelines>
+  <Metadata>
+    <ProjectTarget>Next.js 15 App Router</ProjectTarget>
+    <PrimaryTechnologies>TypeScript, Node.js, React, Shadcn UI, Radix UI, Tailwind CSS, Zustand, TanStack React Query, Zod, Jest, React Testing Library, next-i18next, nuqs</PrimaryTechnologies>
+    <ExpertiseAssumption>The LLM is an expert in these technologies.</ExpertiseAssumption>
+  </Metadata>
+
+
+  <FileSpecificRules type="tsx_only">
+    <ComponentArchitecture>
+      <Guideline>Define components using the 'function' keyword with TypeScript interfaces for props.</Guideline>
+      <Guideline>Extract reusable component logic into custom hooks.</Guideline>
+      <Guideline>Implement proper component composition patterns for maintainability.</Guideline>
+      <Guideline>Structure files to prioritize the exported component, followed by subcomponents, helpers, static content, and then type imports.</Guideline>
+    </ComponentArchitecture>
+    <TypeScriptUsage>
+      <Guideline>TSX files must not define new types or interfaces. All types used in TSX components (e.g., for props, state, or utility types) must be imported from corresponding `.ts` files.</Guideline>
+    </TypeScriptUsage>
+    <ClientComponentUsage>
+      <Guideline>Use the 'use client' directive only when absolutely necessary.</Guideline>
+      <Restriction>This includes: Event listeners, Browser APIs access, Client-side state management (Zustand), Client-side-only libraries.</Restriction>
+      <Prohibition>Avoid 'use client' for data fetching (unless through TanStack React Query) or basic state management that could be handled by Server Components.</Prohibition>
+      <ClientDataFetching>
+        <Guideline>When client-side data fetching is necessary, always use TanStack React Query for managing fetching, caching, and synchronization.</Guideline>
+        <Synchronization>If required, ensure TanStack React Query's state is synchronized with the Zustand store.</Synchronization>
+      </ClientDataFetching>
+      <ClientStateManagement>
+        <Guideline>For client-side state management, always use Zustand store; avoid using `useState` for anything beyond ephemeral, local component state.</Guideline>
+        <OptimisticUI>
+          <Guideline>Utilize the `useOptimistic` hook for optimistic UI updates in client components.</Guideline>
+          <StateManagement>Any related states for optimistic updates that need global access or persistence beyond the component should be managed by Zustand.</StateManagement>
+        </OptimisticUI>
+      </ClientStateManagement>
+    </ClientComponentUsage>
+
+  </FileSpecificRules>
+</DevelopmentGuidelines>

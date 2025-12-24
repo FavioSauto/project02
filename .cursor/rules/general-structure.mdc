@@ -1,0 +1,262 @@
+---
+description: General structure for the project
+globs:
+alwaysApply: true
+---
+
+<ProjectStructureRules>
+  <Metadata>
+    <RuleName>Cursor Project Structure Adherence Rule for Next.js 15 App Router</RuleName>
+    <NextJSVersion>15</NextJSVersion>
+    <RouterType>App Router</RouterType>
+    <TargetLLM>Cursor</TargetLLM>
+  </Metadata>
+
+  <CoreDirective>
+    When generating new code, adding functionalities, refactoring, or modifying any existing files,
+    you must always strictly adhere to the following Next.js 15 App Router project structure.
+    Never deviate from these guidelines or introduce new top-level directories or files that do
+    not conform to this blueprint, unless explicitly instructed otherwise.
+  </CoreDirective>
+
+  <DetailedStructureRules>
+
+    <Directory name="app">
+      <Purpose>
+        This directory is exclusively for Next.js page.tsx (or .ts, .jsx, .js equivalents)
+        and layout.tsx (or equivalents).
+      </Purpose>
+      <ContentRestriction>
+        Files within 'app/' must always be nested within route-segment folders
+        (e.g., 'app/dashboard/page.tsx', 'app/dashboard/layout.tsx').
+      </ContentRestriction>
+      <StrictProhibitions>
+        No other file types (e.g., components, hooks, utilities) or folders (except for route
+        segments containing 'page.tsx' and 'layout.tsx') are permitted directly within 'app/'
+        or its immediate subdirectories.
+      </StrictProhibitions>
+    </Directory>
+
+    <Directory name="features">
+      <Purpose>
+        This directory contains all application-specific, self-contained feature modules.
+      </Purpose>
+      <Organization>
+        Each feature must reside in its own dedicated folder
+        (e.g., 'features/user-management', 'features/product-catalog').
+      </Organization>
+      <InternalStructure description="A feature folder may contain any or all of the following subdirectories and files, strictly following this internal arrangement.">
+        <Item type="directory" name="components">
+          <Description>
+            Feature-specific React components. These components should not be generic and
+            should serve only the current feature.
+          </Description>
+        </Item>
+        <Item type="directory" name="schemas">
+          <Description>
+            Form validation schemas (e.g., Zod schemas) pertinent to the feature.
+          </Description>
+        </Item>
+        <Item type="directory" name="types">
+          <Description>TypeScript type definitions specific to the feature.</Description>
+        </Item>
+        <Item type="directory" name="server">
+          <Description>Server-side logic for the feature.</Description>
+          <SubItems>
+            <Item type="directory" name="actions">
+              <Description>
+                Next.js Server Actions specific to the feature. These actions must utilize
+                queries/mutations exported from 'server/db/index.ts' within the same feature.
+              </Description>
+            </Item>
+            <Item type="directory" name="db">
+              <Description>Database interaction logic for the feature.</Description>
+              <SubItems>
+                <Item type="file" name="index.ts">
+                  <Description>
+                    This file must contain all database queries and mutations specifically
+                    for this feature. These exports are to be used by 'server/actions/'.
+                  </Description>
+                </Item>
+              </SubItems>
+            </Item>
+          </SubItems>
+        </Item>
+        <Item type="file" name="slice.ts">
+          <Description>Zustand store slice definition specific to the feature.</Description>
+        </Item>
+        <Item type="directory" name="utils">
+          <Description>
+            Utility files containing logic specific to the application's functionality within
+            this feature. This includes logic that is not directly related to server actions,
+            database interactions, or generic global utilities (found in root 'lib/').
+            For example, code that orchestrates sequential calls to third-party APIs with
+            specific data for this feature would reside here.
+          </Description>
+        </Item>
+      </InternalStructure>
+    </Directory>
+
+    <Directory name="components" level="root">
+      <Purpose>
+        This directory houses general-purpose, reusable React components that can be used
+        across multiple features or pages throughout the application.
+      </Purpose>
+      <Content>It also includes all Shadcn UI components.</Content>
+    </Directory>
+
+    <Directory name="hooks" level="root">
+      <Purpose>Contains reusable React custom hooks that are not tied to a specific feature.</Purpose>
+    </Directory>
+
+    <Directory name="lib" level="root">
+      <Purpose>
+        Contains general utility functions and helper modules that are not specific to any
+        single feature.
+      </Purpose>
+    </Directory>
+
+    <Directory name="providers" level="root">
+      <Purpose>
+        Contains React Context Providers (e.g., ThemeProvider, AuthProvider) that wrap the
+        application or parts of it to provide global context.
+      </Purpose>
+    </Directory>
+
+    <Directory name="store" level="root">
+      <Purpose>Global Zustand store configuration.</Purpose>
+      <StrictContent>
+        <Description>This directory must only contain two files:</Description>
+        <File name="store.ts">
+          <Description>The main Zustand store configuration.</Description>
+        </File>
+        <File name="types.ts">
+          <Description>TypeScript types related to the global Zustand store.</Description>
+        </File>
+      </StrictContent>
+      <AbsoluteProhibition>No other files or folders are allowed within 'store/'.</AbsoluteProhibition>
+    </Directory>
+
+    <Directory name="drizzle" level="root">
+      <Purpose>Drizzle ORM configuration and schema.</Purpose>
+      <StrictContent>
+        <Description>This directory must only contain two files:</Description>
+        <File name="db.ts">
+          <Description>The Drizzle ORM database client instance.</Description>
+        </File>
+        <File name="schema.ts">
+          <Description>The Drizzle ORM schema definitions.</Description>
+        </File>
+      </StrictContent>
+      <AbsoluteProhibition>No other files or folders are allowed within 'drizzle/'.</AbsoluteProhibition>
+    </Directory>
+
+  </DetailedStructureRules>
+
+  <BehavioralMandate>
+    <Rule id="1">
+      <Title>Prioritize Existing Structure</Title>
+      <Description>
+        When implementing new functionality, first identify the most appropriate existing folder
+        or create a new feature folder within 'features/' if the functionality constitutes a
+        new, distinct feature.
+      </Description>
+    </Rule>
+    <Rule id="2">
+      <Title>No Ad-Hoc Files/Folders</Title>
+      <Description>
+        Never create files or folders that do not explicitly conform to this specified structure.
+        If a file or folder doesn't fit, it indicates a structural misalignment that must be
+        addressed, not circumvented.
+      </Description>
+    </Rule>
+    <Rule id="3">
+      <Title>Consistency is Key</Title>
+      <Description>
+        Maintain established naming conventions and structural integrity across the entire project
+        as defined above.
+      </Description>
+    </Rule>
+    <Rule id="4">
+      <Title>Refactor, Don't Diverge</Title>
+      <Description>
+        If a requested change seems to necessitate a deviation from this structure, inform the user
+        or propose a refactoring that aligns with these rules rather than proceeding with a
+        diverging solution.
+      </Description>
+    </Rule>
+    <Rule id="5">
+      <Title>Error on the Side of Strictness</Title>
+      <Description>
+        If unsure about placement, assume the strictest interpretation of these rules and seek
+        clarification if necessary.
+      </Description>
+    </Rule>
+    <Rule id="6">
+      <Title>Analyze Existing Files for Context and Duplication</Title>
+      <Description>
+        Always thoroughly analyze existing files relevant to the current task. This is critical
+        to gain full context, understand existing patterns, and prevent code duplication.
+        Leverage existing utilities, components, and logic wherever possible.
+      </Description>
+    </Rule>
+    <Rule id="7">
+      <Title>Prohibition of Arbitrary Files and Documentation (Non-Code)</Title>
+      <Description>
+        You **must never create arbitrary files** anywhere in the project that do
+        not strictly conform to the explicitly defined project structure (`app/`,
+        `features/`, `components/`, `hooks/`, `lib/`, `providers/`, `store/`, `drizzle/`).
+      </Description>
+      <ExplicitProhibition>
+        This includes, but is not limited to, non-code files such as:
+        <FileType>.md (Markdown files, e.g., 'notes.md', 'feature-doc.md')</FileType>
+        <FileType>.txt (Plain text files)</FileType>
+        <FileType>.log (Log files within the project structure)</FileType>
+        <FileType>.json (Configuration files not explicitly defined in the structure)</FileType>
+        <Description>
+          Files like 'README.md' or 'package.json' in the root are part of the standard
+          project setup and are therefore permitted, but no new, unspecfied instances.
+        </Description>
+      </ExplicitProhibition>
+      <DocumentationGuidance>
+        All documentation and explanatory notes **must primarily reside within**:
+        <Location>JSDoc comments directly in the code for public functions, methods, and interfaces.</Location>
+        <Location>The explicit structure provided (e.g., a specific schema file for Zod, or a type file for types).</Location>
+        <Rationale>
+          Maintaining documentation within the code or strict structural boundaries
+          ensures consistency, reduces clutter, and keeps documentation synchronized
+          with the code it describes. If a separate documentation system (e.g., a 'docs/'
+          folder) is required in the future, it must be explicitly defined and added
+          to these rules.
+        </Rationale>
+      </DocumentationGuidance>
+      <ExceptionHandling>
+        If a user explicitly requests the creation of a non-conforming file, you
+        **must** first clarify the necessity and propose alternatives that align with
+        these rules. Only proceed if the user provides a strong, temporary, and
+        justifiable reason, and clearly mark such files as non-standard or temporary.
+      </ExceptionHandling>
+    </Rule>
+    <Rule id="8">
+      <Title>Prohibition of Console Logs for Debugging</Title>
+      <Description>
+        You are strictly prohibited from adding console.log, console.warn, console.error,
+        or any similar debugging output statements to the codebase. Assume a proper debugging
+        environment (e.g., breakpoints, developer tools) is available. Debugging statements
+        should only be added temporarily during an active debugging session and removed
+        before committing.
+      </Description>
+    </Rule>
+    <Rule id="9">
+      <Title>Analyze package.json for Third-Party Libraries</Title>
+      <Description>
+        Before implementing new functionality or creating new utilities, you must analyze
+        the project's 'package.json' file. Identify and prioritize the use of existing
+        third-party libraries (e.g., a 'react-hooks-library', utility belt libraries)
+        that can fulfill the requirements. Avoid reimplementing common functionalities
+        if a suitable, already installed library can be utilized effectively.
+      </Description>
+    </Rule>
+  </BehavioralMandate>
+
+</ProjectStructureRules>

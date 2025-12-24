@@ -1,0 +1,24 @@
+---
+globs: **/*.ts
+alwaysApply: false
+---
+<DevelopmentGuidelines>
+  <Metadata>
+    <ProjectTarget>Next.js 15 App Router</ProjectTarget>
+    <PrimaryTechnologies>TypeScript, Node.js, React, Shadcn UI, Radix UI, Tailwind CSS, Zustand, TanStack React Query, Zod, Jest, React Testing Library, next-i18next, nuqs</PrimaryTechnologies>
+    <ExpertiseAssumption>The LLM is an expert in these technologies.</ExpertiseAssumption>
+  </Metadata>
+  
+  <FileSpecificRules type="ts_only">
+    <TypeScriptUsage>
+      <Guideline>Enable TypeScript strict mode ('strict': true in tsconfig.json).</Guideline>
+      <Guideline>All type definitions, interfaces, and complex type manipulations (generics, utility types like `Partial`, `Pick`, `Omit`, and mapped types) must reside in `.ts` files.</Guideline>
+      <Guideline>Prefer interfaces over types for defining object structures, especially when extending or implementing.</Guideline>
+      <Guideline>Define clear interfaces for data structures, API responses, and Zustand state structures.</Guideline>
+      <Guideline>Use type guards to handle potential `undefined` or `null` values safely.</Guideline>
+      <Guideline>Apply generics to functions, actions, and slices where type flexibility is needed.</Guideline>
+    </TypeScriptUsage>
+
+  </FileSpecificRules>
+
+</DevelopmentGuidelines>
