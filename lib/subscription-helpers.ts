@@ -1,4 +1,4 @@
-import { getUserSubscription } from '@/features/subscription/server/db';
+import { getUserSubscription, updateUserSubscription } from '@/features/subscription/server/db';
 import type { SubscriptionTier, SubscriptionStatus } from '@/features/subscription/types';
 
 /**
@@ -74,4 +74,51 @@ export function getMaxConcurrentConnections(tier: SubscriptionTier | null): numb
   }
 
   return 0;
+}
+
+/**
+ * Check if user has enough credits
+ */
+export async function hasEnoughCredits(userId: string, requiredCredits: number): Promise<boolean> {
+  const subscription = await getUserSubscription(userId);
+
+  if (!subscription || subscription.creditsRemaining === null) {
+    return false;
+  }
+
+  return subscription.creditsRemaining >= requiredCredits;
+}
+
+/**
+ * Consume credits from user account
+ */
+export async function consumeCredits(userId: string, credits: number): Promise<void> {
+  const subscription = await getUserSubscription(userId);
+
+  if (!subscription || subscription.creditsRemaining === null) {
+    throw new Error('No credits available');
+  }
+
+  const newCredits = subscription.creditsRemaining - credits;
+
+  if (newCredits < 0) {
+    throw new Error('Insufficient credits');
+  }
+
+  await updateUserSubscription(userId, {
+    creditsRemaining: newCredits,
+  });
+}
+
+/**
+ * Get user's remaining credits
+ */
+export async function getRemainingCredits(userId: string): Promise<number> {
+  const subscription = await getUserSubscription(userId);
+
+  if (!subscription || subscription.creditsRemaining === null) {
+    return 0;
+  }
+
+  return subscription.creditsRemaining;
 }

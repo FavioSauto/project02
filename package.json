@@ -52,7 +52,7 @@
     "date-fns": "^4.1.0",
     "dotenv": "^17.2.3",
     "drizzle-kit": "^0.31.8",
-    "drizzle-orm": "^0.44.7",
+    "drizzle-orm": "^0.45.1",
     "embla-carousel-react": "^8.6.0",
     "little-date": "^1.2.1",
     "lucide-react": "^0.555.0",
