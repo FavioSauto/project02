@@ -18,6 +18,8 @@ import { eq } from 'drizzle-orm';
  * - Auth routes: /log-in, /sign-up
  *   - If NOT authenticated: allow access
  *   - If authenticated: redirect to /analyze
+ * - Onboarding route: /onboarding - accessible to all authenticated users (even without subscription)
+ *   - New users must complete onboarding before being prompted to subscribe
  * - Pricing route: /pricing - accessible to all authenticated users
  * - Protected routes: Everything else requires authentication AND active Pro subscription
  *   - If NOT authenticated: redirect to /log-in
@@ -117,9 +119,14 @@ export async function proxy(request: NextRequest) {
     // Check if subscription is active
     const isSubscriptionActive = tier === 'Pro' && status === 'active' && endsAt && new Date(endsAt) > new Date();
 
-    // Allow access to pricing page for authenticated users (even without subscription)
-    if (pathname === '/pricing') {
-      return NextResponse.next();
+    // Allow access to pricing and onboarding pages for authenticated users (even without subscription)
+    // Onboarding must be accessible to new users before they subscribe
+    if (pathname === '/pricing' || pathname === '/onboarding') {
+      return NextResponse.next({
+        headers: {
+          'x-pathname': pathname,
+        },
+      });
     }
 
     // For all other protected routes, require active Pro subscription
@@ -131,7 +138,11 @@ export async function proxy(request: NextRequest) {
     }
 
     // Allow access to protected routes for Pro users
-    return NextResponse.next();
+    return NextResponse.next({
+      headers: {
+        'x-pathname': pathname,
+      },
+    });
   } catch (error) {
     // If session validation fails (expired, invalid, or any other error),
     // clear the session and redirect to login page
