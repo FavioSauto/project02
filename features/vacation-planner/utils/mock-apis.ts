@@ -346,3 +346,5 @@ export function getAvailableDestinations(): string[] {
   return Object.keys(MOCK_LOCATIONS_DATABASE);
 }
 
+
+

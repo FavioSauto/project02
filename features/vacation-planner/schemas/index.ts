@@ -77,3 +77,5 @@ export type CreateActivityFormData = z.infer<typeof createActivitySchema>;
 export type UpdateActivityFormData = z.infer<typeof updateActivitySchema>;
 export type ReorderActivitiesFormData = z.infer<typeof reorderActivitiesSchema>;
 
+
+

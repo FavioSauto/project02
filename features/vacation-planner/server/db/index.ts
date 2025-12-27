@@ -277,3 +277,5 @@ export async function createLocation(input: Omit<Location, 'id' | 'createdAt' | 
   return result[0] as Location;
 }
 
+
+
